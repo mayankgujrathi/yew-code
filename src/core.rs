@@ -1,8 +1,8 @@
 pub use crate::minimal::{comp, comp_with_key, ui};
 
-use std::borrow::Cow;
+use std::{borrow::Cow, rc::Rc};
 use yew::{
-  virtual_dom::{AttrValue, Key, VComp, VNode, VTag, VText},
+  virtual_dom::{AttrValue, Key, Listener, ListenerKind, VComp, VNode, VTag, VText},
   Component,
 };
 
@@ -87,4 +87,53 @@ impl Ui {
   pub fn vnode(self) -> VNode {
     self.node
   }
+  #[inline]
+  pub fn add_events(mut self, listeners: Box<[Option<Rc<dyn Listener>>]>) -> Self {
+    match &mut self.node {
+      VNode::VTag(root) => root.set_listener(listeners),
+      _ => unimplemented!(),
+    };
+    self
+  }
+}
+
+type Handler = Box<dyn Fn(web_sys::Event)>;
+
+pub struct UiListener {
+  pvt_kind: ListenerKind,
+  pvt_handle: Handler,
+  pvt_passive: bool,
+}
+
+impl UiListener {
+  pub fn new(kind: ListenerKind, handle: Handler, passive: bool) -> Self {
+    Self {
+      pvt_kind: kind,
+      pvt_handle: handle,
+      pvt_passive: passive,
+    }
+  }
+  pub fn from(kind: ListenerKind, handle: Handler) -> Option<Rc<dyn Listener>> {
+    Some(Rc::new(UiListener::new(kind, handle, false)))
+  }
+}
+
+impl Listener for UiListener {
+  fn kind(&self) -> ListenerKind {
+    self.pvt_kind
+  }
+  fn handle(&self, event: web_sys::Event) {
+    (self.pvt_handle)(event);
+  }
+  fn passive(&self) -> bool {
+    self.pvt_passive
+  }
+}
+
+pub fn listener(kind: ListenerKind, handle: Handler) -> Option<Rc<dyn Listener>> {
+  UiListener::from(kind, handle)
+}
+
+pub fn listener_passive(kind: ListenerKind, handle: Handler) -> Option<Rc<dyn Listener>> {
+  Some(Rc::new(UiListener::new(kind, handle, true)))
 }

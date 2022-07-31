@@ -2,3 +2,8 @@
 [x] Components # on: July 27 2022
 [x] Shortcuts # on: July 28 2022
 [x] Replace .node, with read only # on: July 28 2022
+[x] Event Listener (try implementing single dynamic Listener(trait)) # on: July 31 2022
+[-] Add refs
+[-] Easy css in rs
+[-] Special care for id & class attributes
+[-] Refine Event handler
